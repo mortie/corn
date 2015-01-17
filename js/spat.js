@@ -1,14 +1,27 @@
 (function()
 {
-	function get(url, cb)
+	function request(url, method, data, cb)
 	{
 		var xhr = new XMLHttpRequest();
 		xhr.onload = function()
 		{
-			cb(xhr.responseText);
+			if (xhr.status === 200)
+				cb(xhr.responseText);
+			else
+				throw new Error(xhr.status+": "+xhr.statusText+" ("+url+")");
 		}
-		xhr.open("get", url);
-		xhr.send();
+		xhr.open(method, url);
+		xhr.send(data);
+	}
+
+	function get(url, cb)
+	{
+		request(url, "get", null, cb);
+	}
+
+	function post(url, data, cb)
+	{
+		request(url, "post", data, cb);
 	}
 
 	function Async(num, cb)
@@ -20,31 +33,39 @@
 		}
 	}
 
-	window.Maspa = function(defaultView, element, viewsDir)
+	window.Spat = function(options)
 	{
-		this.defaultView = defaultView;
-		this._viewsDir = viewsDir || "views"
+		options = options || {};
+
+		this.defaultView = options.defaultView || "home";
+		this._viewsDir = options.viewsDir || "views";
+		this._element = options.element || document.getElementById("view");
+
 		this._views = {};
 		this._path = window.location.hash.substring(1);
-		this._element = element;
 
-		window.addEventListener("popstate", function(e)
+		function viewChangeHandler()
 		{
 			this._path = window.location.hash.substring(1);
-			this.load(this._path);
-		}.bind(this));
+			if (this._path !== "")
+				this.load(this._path);
+		}
 
-		window.addEventListener("load", function(e)
-		{
-			this._path = window.location.hash.substring(1);
-			this.load(this._path);
-		}.bind(this));
+		window.addEventListener("popstate", viewChangeHandler.bind(this));
+		window.addEventListener("load", viewChangeHandler.bind(this));
 	}
-	window.Maspa.prototype =
+	window.Spat.prototype =
 	{
 		"addView": function(name, templates, cb)
 		{
-			var view = new View(name, templates, this._element, this._viewsDir, cb);
+			var view = new View(
+				name,
+				templates,
+				this._element,
+				this._viewsDir,
+				cb
+			);
+
 			this._views[name] = view;
 
 			if (this._path == "" && name == this.defaultView)
@@ -69,7 +90,7 @@
 
 			if (!view)
 			{
-				console.log("View not found: "+tokens[0]);
+				console.log("View not found: "+path);
 				return;
 			}
 
@@ -91,9 +112,10 @@
 	{
 		this.name = name;
 		this.cb = cb;
+		this._element = element;
+
 		this.templatesLoaded = false;
 		this._templateCache = {};
-		this._element = element;
 
 		//do things once all templates are loaded
 		var async = Async(templates.length, function()
@@ -148,6 +170,12 @@
 
 				elem.addEventListener(evt, cb, false);
 			}
-		}
+		},
+
+		"post": post,
+
+		"get": get,
+
+		"Async": Async
 	}
 })();
