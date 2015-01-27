@@ -1,6 +1,12 @@
-console.log("starting");
+var fs = require("fs");
+var http = require("http");
 
-setInterval(function()
+var conf = JSON.parse(fs.readFileSync("conf.json"));
+
+console.log("Starting HTTP server on port "+conf.port+".");
+
+http.createServer(function(req, res)
 {
-	console.log("I am do something");
-}, 1000);
+	console.log("New request from "+req.connection.remoteAddress);
+	res.end("no");
+}).listen(conf.port);

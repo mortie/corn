@@ -2,7 +2,7 @@
 
 is_running()
 {
-	if [ -f .pid ]; then
+	if [ -f .pid ] && ps | grep $(cat .pid); then
 		return 0
 	else
 		return 1
@@ -12,7 +12,7 @@ is_running()
 write_log()
 {
 	dstr=$(date "+%d/%m/%Y %H:%M")
-	echo "$dstr: $1" >> corn.log
+	echo "$dstr: ~~~~~~~~ $1 ~~~~~~~~" >> corn.log
 }
 
 if [ "$1" = "status" ]; then
@@ -33,7 +33,7 @@ elif [ "$1" = "stop" ]; then
 	if is_running; then
 		kill $(cat .pid)
 		rm .pid
-		write_log "PROCESS ENDED"
+		write_log "PROCESS   ENDED"
 	else
 		echo "Corn is not running."
 	fi
@@ -41,7 +41,7 @@ elif [ "$1" = "kill" ]; then
 	if is_running; then
 		kill -9 $(cat .pid)
 		rm .pid
-		write_log "PROCESS KILLED"
+		write_log "PROCESS  KILLED"
 	else
 		echo "Corn is not running."
 	fi
