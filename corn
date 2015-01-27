@@ -1,0 +1,49 @@
+#!/bin/sh
+
+is_running()
+{
+	if [ -f .pid ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+write_log()
+{
+	dstr=$(date "+%d/%m/%Y %H:%M")
+	echo "$dstr: $1" >> corn.log
+}
+if [ "$1" = "status" ]; then
+	if is_running; then
+		echo "Corn is running."
+	else
+		echo "Corn is not running."
+	fi
+elif [ "$1" = "start" ]; then
+	if is_running; then
+		echo "Corn is already running."
+	else
+		write_log "PROCESS STARTED"
+		node index.js >> corn.log &
+		echo $! > .pid
+	fi
+elif [ "$1" = "stop" ]; then
+	if is_running; then
+		kill $(cat .pid)
+		rm .pid
+		write_log "PROCESS ENDED"
+	else
+		echo "Corn is not running."
+	fi
+elif [ "$1" = "kill" ]; then
+	if is_running; then
+		kill -9 $(cat .pid)
+		rm .pid
+		write_log "PROCESS KILLED"
+	else
+		echo "Corn is not running."
+	fi
+else
+	echo "corn <status|start|stop|kill>"
+fi
